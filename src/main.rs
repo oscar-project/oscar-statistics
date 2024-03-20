@@ -1,8 +1,6 @@
-use bytecount;
 use clap::Parser;
 use oscar_io::v3::Document;
 use std::collections::HashMap;
-use std::convert::TryFrom;
 use std::io::prelude::*;
 use std::sync::{Arc, Mutex};
 use std::{
@@ -35,8 +33,11 @@ fn counter(file: DirEntry, db: Arc<Mutex<HashMap<String, HashMap<String, (u64, u
     for line in reader.lines() {
         let doc = serde_json::from_str::<Document>(&line.unwrap()).unwrap();
         let content = doc.content();
-        num_toks += u64::try_from(bytecount::count(content.as_bytes(), b' ')).unwrap();
-        num_toks += u64::try_from(bytecount::count(content.as_bytes(), b'\n')).unwrap();
+        for char in content.chars() {
+            if char.is_whitespace() {
+                num_toks += 1;
+            }
+        }
         num_docs += 1;
     }
     db.lock()
