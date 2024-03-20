@@ -6,11 +6,12 @@ use std::{
     fs::File,
     io::{BufRead, BufReader},
 };
+use tokio::task::JoinSet;
 use walkdir::{DirEntry, WalkDir};
 
 mod cli;
 
-async fn counter(file: DirEntry, db: Arc<Mutex<HashMap<String, HashMap<String, (u64, u64)>>>>) {
+fn counter(file: DirEntry, db: Arc<Mutex<HashMap<String, HashMap<String, (u64, u64)>>>>) {
     let path = file.path();
     let components: Vec<_> = path
         .components()
@@ -62,6 +63,8 @@ async fn counter(file: DirEntry, db: Arc<Mutex<HashMap<String, HashMap<String, (
 async fn main() {
     let args = cli::Args::parse();
 
+    let mut set = JoinSet::new();
+
     let db: Arc<Mutex<HashMap<String, HashMap<String, (u64, u64)>>>> =
         Arc::new(Mutex::new(HashMap::new()));
 
@@ -74,9 +77,14 @@ async fn main() {
 
     for file in file_paths {
         let db = db.clone();
-        tokio::spawn(async move {
-            counter(file, db).await;
+        set.spawn(async move {
+            counter(file, db);
         });
     }
+
+    while let Some(res) = set.join_next().await {
+        res.unwrap();
+    }
+
     println!("{:?}", db.lock().unwrap());
 }
