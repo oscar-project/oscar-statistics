@@ -1,5 +1,7 @@
 use clap::Parser;
 use oscar_io::v3::Document;
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 use std::{
     fs::File,
     io::{BufRead, BufReader},
@@ -8,7 +10,7 @@ use walkdir::{DirEntry, WalkDir};
 
 mod cli;
 
-async fn counter(file: DirEntry) {
+async fn counter(file: DirEntry, db: Arc<Mutex<HashMap<&str, HashMap<&str, (u64, u64)>>>>) {
     let path = file.path();
     let components: Vec<_> = path
         .components()
@@ -36,6 +38,16 @@ async fn counter(file: DirEntry) {
         }
         num_docs += 1;
     }
+    db.lock()
+        .unwrap()
+        .entry(lang)
+        .or_insert(HashMap::new())
+        .entry(snapshot)
+        .and_modify(|e| {
+            e.0 += num_docs;
+            e.1 += num_toks;
+        })
+        .or_insert((num_docs, num_toks));
     println!(
         "{}\t{}\t{:?}\t{}\t{}",
         lang,
@@ -50,6 +62,9 @@ async fn counter(file: DirEntry) {
 async fn main() {
     let args = cli::Args::parse();
 
+    let db: Arc<Mutex<HashMap<&str, HashMap<&str, (u64, u64)>>>> =
+        Arc::new(Mutex::new(HashMap::new()));
+
     let file_paths: Vec<DirEntry> = WalkDir::new(args.folder)
         .into_iter()
         .filter_map(Result::ok)
@@ -58,8 +73,10 @@ async fn main() {
         .collect();
 
     for file in file_paths {
+        let db = db.clone();
         tokio::spawn(async move {
-            counter(file).await;
+            counter(file, db).await;
         });
     }
+    println!("{:?}", db.lock().unwrap());
 }
