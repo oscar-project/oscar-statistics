@@ -10,16 +10,16 @@ use walkdir::{DirEntry, WalkDir};
 
 mod cli;
 
-async fn counter(file: DirEntry, db: Arc<Mutex<HashMap<&str, HashMap<&str, (u64, u64)>>>>) {
+async fn counter(file: DirEntry, db: Arc<Mutex<HashMap<String, HashMap<String, (u64, u64)>>>>) {
     let path = file.path();
     let components: Vec<_> = path
         .components()
         .rev()
         .map(|comp| comp.as_os_str())
         .collect();
-    let mut lang = components[1].to_str().unwrap();
-    lang = lang.strip_suffix("_meta").unwrap();
-    let snapshot = components[2].to_str().unwrap();
+    let lang = components[1].to_str().unwrap();
+    let lang = lang.strip_suffix("_meta").unwrap().to_string();
+    let snapshot = components[2].to_str().unwrap().to_string();
 
     let decoder = {
         let file = File::open(file.path()).unwrap();
@@ -40,9 +40,9 @@ async fn counter(file: DirEntry, db: Arc<Mutex<HashMap<&str, HashMap<&str, (u64,
     }
     db.lock()
         .unwrap()
-        .entry(lang)
+        .entry(lang.clone())
         .or_insert(HashMap::new())
-        .entry(snapshot)
+        .entry(snapshot.clone())
         .and_modify(|e| {
             e.0 += num_docs;
             e.1 += num_toks;
@@ -62,7 +62,7 @@ async fn counter(file: DirEntry, db: Arc<Mutex<HashMap<&str, HashMap<&str, (u64,
 async fn main() {
     let args = cli::Args::parse();
 
-    let db: Arc<Mutex<HashMap<&str, HashMap<&str, (u64, u64)>>>> =
+    let db: Arc<Mutex<HashMap<String, HashMap<String, (u64, u64)>>>> =
         Arc::new(Mutex::new(HashMap::new()));
 
     let file_paths: Vec<DirEntry> = WalkDir::new(args.folder)
