@@ -1,6 +1,7 @@
 use clap::Parser;
 use oscar_io::v3::Document;
 use std::collections::HashMap;
+use std::io::prelude::*;
 use std::sync::{Arc, Mutex};
 use std::{
     fs::File,
@@ -85,6 +86,12 @@ async fn main() {
     while let Some(res) = set.join_next().await {
         res.unwrap();
     }
+
+    let mut dst = File::create(args.output).unwrap();
+
+    let json = serde_json::to_string_pretty(&*db.lock().unwrap()).unwrap();
+
+    dst.write_all(json.as_bytes()).unwrap();
 
     println!("{:?}", db.lock().unwrap());
 }
