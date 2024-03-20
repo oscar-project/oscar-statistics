@@ -1,6 +1,5 @@
 use clap::Parser;
 use std::{
-    ffi::OsStr,
     io::{BufRead, BufReader},
     path::{Component, Path},
 };
@@ -25,13 +24,9 @@ fn main() {
             .rev()
             .map(|comp| comp.as_os_str())
             .collect();
-        let lang = components[1];
-        let snapshot = components[2];
-        println!(
-            "{:?}\t{:?}\t{:?}",
-            lang,
-            snapshot,
-            path.file_name().unwrap()
-        );
+        let mut lang = components[1].to_str().unwrap();
+        lang = lang.strip_suffix("_meta").unwrap();
+        let snapshot = components[2].to_str().unwrap();
+        println!("{}\t{}\t{:?}", lang, snapshot, path.file_name().unwrap());
     }
 }
