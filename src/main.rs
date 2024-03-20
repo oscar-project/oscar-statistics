@@ -1,9 +1,8 @@
 use clap::Parser;
 use std::{
-    env,
-    fs::{self},
+    ffi::OsStr,
     io::{BufRead, BufReader},
-    path::Path,
+    path::{Component, Path},
 };
 use walkdir::{DirEntry, WalkDir};
 
@@ -21,9 +20,13 @@ fn main() {
 
     for file in file_paths {
         let path = file.path();
-        let ancestors: Vec<&Path> = path.ancestors().collect();
-        let lang = ancestors[1];
-        let snapshot = ancestors[2];
+        let components: Vec<_> = path
+            .components()
+            .rev()
+            .map(|comp| comp.as_os_str())
+            .collect();
+        let lang = components[1];
+        let snapshot = components[2];
         println!(
             "{:?}\t{:?}\t{:?}",
             lang,
