@@ -1,6 +1,7 @@
 use clap::Parser;
 use oscar_io::v3::Document;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::convert::TryFrom;
 use std::io::prelude::*;
 use std::sync::{Arc, Mutex};
@@ -62,6 +63,11 @@ fn counter(file: DirEntry, db: Arc<Mutex<HashMap<String, HashMap<String, (u64, u
 async fn main() {
     let args = cli::Args::parse();
 
+    let co1 = HashSet::from([
+        "2015-14", "2016-40", "2017-43", "2018-47", "2019-22", "2020-24", "2020-45", "2021-49",
+        "2022-27", "2022-49", "2023-14", "2023-23",
+    ]);
+
     let mut set = JoinSet::new();
 
     let db: Arc<Mutex<HashMap<String, HashMap<String, (u64, u64)>>>> =
@@ -72,6 +78,16 @@ async fn main() {
         .filter_map(Result::ok)
         .filter(|e| e.file_type().is_file())
         .filter(|e| e.file_name().to_str().unwrap().ends_with(".zst"))
+        .filter(|e| {
+            let components: Vec<_> = e
+                .path()
+                .components()
+                .rev()
+                .map(|comp| comp.as_os_str())
+                .collect();
+            let snapshot = components[2].to_str().unwrap();
+            co1.contains(snapshot)
+        })
         .collect();
 
     for file in file_paths {
