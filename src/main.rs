@@ -57,14 +57,20 @@ fn counter(
         let line = match line {
             Ok(line) => line,
             Err(e) => {
-                eprintln!("Error reading line in file {:?}: {}", path, e);
+                eprintln!(
+                    "Error reading line in file {:?} in line {}: {}",
+                    path, num_docs, e
+                );
                 return Err(Error::IoError(e));
             }
         };
         let doc = match serde_json::from_str::<Document>(&line) {
             Ok(doc) => doc,
             Err(e) => {
-                eprintln!("Error parsing document in file {:?}: {}", path, e);
+                eprintln!(
+                    "Error parsing document in file {:?} in line {}: {}",
+                    path, num_docs, e
+                );
                 return Err(Error::SerdeJson(e));
             }
         };
