@@ -159,5 +159,11 @@ async fn main() {
 
     dst.write_all(json.as_bytes()).unwrap();
 
+    println!("------------------------------------");
+
+    println!("{}", json);
+
+    println!("------------------------------------");
+
     println!("{:?}", db.lock().unwrap());
 }
