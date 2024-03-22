@@ -14,7 +14,28 @@ use walkdir::{DirEntry, WalkDir};
 
 mod cli;
 
-fn counter(file: DirEntry, db: Arc<Mutex<HashMap<String, HashMap<String, (u64, u64)>>>>) {
+#[derive(Debug)]
+pub enum Error {
+    SerdeJson(serde_json::Error),
+    IoError(std::io::Error),
+}
+
+impl From<serde_json::Error> for Error {
+    fn from(err: serde_json::Error) -> Self {
+        Error::SerdeJson(err)
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(err: std::io::Error) -> Self {
+        Error::IoError(err)
+    }
+}
+
+fn counter(
+    file: DirEntry,
+    db: Arc<Mutex<HashMap<String, HashMap<String, (u64, u64)>>>>,
+) -> Result<(), Error> {
     let path = file.path();
     let components: Vec<_> = path
         .components()
@@ -33,7 +54,20 @@ fn counter(file: DirEntry, db: Arc<Mutex<HashMap<String, HashMap<String, (u64, u
     let mut num_docs: u64 = 0;
     let mut num_toks: u64 = 0;
     for line in reader.lines() {
-        let doc = serde_json::from_str::<Document>(&line.unwrap()).unwrap();
+        let line = match line {
+            Ok(line) => line,
+            Err(e) => {
+                eprintln!("Error reading line in file {:?}: {}", path, e);
+                return Err(Error::IoError(e));
+            }
+        };
+        let doc = match serde_json::from_str::<Document>(&line) {
+            Ok(doc) => doc,
+            Err(e) => {
+                eprintln!("Error parsing document in file {:?}: {}", path, e);
+                return Err(Error::SerdeJson(e));
+            }
+        };
         let content = doc.content();
         let words = content.split_whitespace().count();
         num_toks += u64::try_from(words).unwrap();
@@ -57,6 +91,7 @@ fn counter(file: DirEntry, db: Arc<Mutex<HashMap<String, HashMap<String, (u64, u
         num_docs,
         num_toks
     );
+    Ok(())
 }
 
 #[tokio::main]
@@ -93,12 +128,23 @@ async fn main() {
     for file in file_paths {
         let db = db.clone();
         set.spawn(async move {
-            counter(file, db);
+            let res = counter(file, db);
+            match res {
+                Ok(_) => {}
+                Err(e) => {
+                    eprintln!("Error: {:?}", e);
+                }
+            }
         });
     }
 
     while let Some(res) = set.join_next().await {
-        res.unwrap();
+        match res {
+            Ok(_) => {}
+            Err(e) => {
+                eprintln!("Error: {:?}", e);
+            }
+        }
     }
 
     let mut dst = File::create(args.output).unwrap();
