@@ -1,4 +1,5 @@
 #[derive(Debug)]
+#[allow(dead_code)]
 pub enum Error {
     SerdeJson(serde_json::Error),
     IoError(std::io::Error),

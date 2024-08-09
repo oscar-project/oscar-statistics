@@ -9,5 +9,5 @@ mod stats;
 async fn main() {
     let args = cli::Args::parse();
 
-    stats::compute_stats(&args.src, &args.dst, args.threads).await;
+    stats::compute_stats(&args.src, &args.dst, args.snapshot, args.threads).await;
 }

@@ -16,6 +16,10 @@ pub struct Args {
     #[arg(value_name = "DESTINATION FILE")]
     pub dst: PathBuf,
 
+    /// Name of the snapshot
+    #[arg(value_name = "SNAPSHOT")]
+    pub snapshot: String,
+
     /// Number of threads to use
     #[arg(short, long, default_value = "10", value_name = "NUMBER OF THREADS")]
     pub threads: usize,
