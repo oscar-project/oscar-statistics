@@ -2,12 +2,21 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
-#[derive(Parser, Debug)]
-#[command(version, about, long_about = None)]
+#[derive(Parser)]
+#[command(name = "oscar-statistics")]
+#[command(author = "Pedro Ortiz Suarez <pedro@commoncrawl.org>")]
+#[command(version = "0.1.0")]
+#[command(about = "Compute statistics of an OSCAR release", long_about = None)]
 pub struct Args {
-    #[arg(short, long, value_name = "FOLDER")]
-    pub folder: PathBuf,
+    /// Folder containing the indices
+    #[arg(value_name = "INPUT FOLDER")]
+    pub src: PathBuf,
 
-    #[arg(short, long, value_name = "OUTPUT")]
-    pub output: PathBuf,
+    /// Parquet file to write
+    #[arg(value_name = "DESTINATION FILE")]
+    pub dst: PathBuf,
+
+    /// Number of threads to use
+    #[arg(short, long, default_value = "10", value_name = "NUMBER OF THREADS")]
+    pub threads: usize,
 }
