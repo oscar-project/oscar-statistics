@@ -115,6 +115,7 @@ async fn counter(
     let mut num_docs = 0;
     let mut num_toks = 0;
     let mut num_bytes = 0;
+    let mut num_chars = 0;
 
     for line in reader.lines() {
         let line = match line {
@@ -141,6 +142,7 @@ async fn counter(
         lang = doc.metadata.identification.label;
         num_bytes += u64::try_from(content.len()).unwrap();
         num_toks += u64::try_from(content.split_whitespace().count()).unwrap();
+        num_chars += u64::try_from(content.chars().count()).unwrap();
         num_docs += 1;
     }
 
@@ -150,7 +152,7 @@ async fn counter(
         num_docs: num_docs,
         num_toks: num_toks,
         num_bytes: num_bytes,
-        num_chars: num_bytes,
+        num_chars: num_chars,
     };
 
     db.lock()
@@ -161,7 +163,7 @@ async fn counter(
     println!("Finished processing: {}", path.to_str().unwrap());
     println!(
         "Stats: \n lang: {} \n num_docs: {} \n num_toks: {} \n num_bytes: {} \n num_chars: {}",
-        lang, num_docs, num_toks, num_bytes, num_bytes
+        lang, num_docs, num_toks, num_bytes, num_chars
     );
     Ok(())
 }
