@@ -51,16 +51,16 @@ impl StatsBuider {
         let lang_field = Arc::new(Field::new("lang", DataType::Utf8, false));
 
         let num_docs = Arc::new(self.num_docs.finish()) as ArrayRef;
-        let num_docs_field = Arc::new(Field::new("num_docs", DataType::Int64, false));
+        let num_docs_field = Arc::new(Field::new("num_docs", DataType::UInt64, false));
 
         let num_toks = Arc::new(self.num_toks.finish()) as ArrayRef;
-        let num_toks_field = Arc::new(Field::new("num_toks", DataType::Int64, false));
+        let num_toks_field = Arc::new(Field::new("num_toks", DataType::UInt64, false));
 
         let num_bytes = Arc::new(self.num_bytes.finish()) as ArrayRef;
-        let num_bytes_field = Arc::new(Field::new("num_bytes", DataType::Int64, false));
+        let num_bytes_field = Arc::new(Field::new("num_bytes", DataType::UInt64, false));
 
         let num_chars = Arc::new(self.num_chars.finish()) as ArrayRef;
-        let num_chars_field = Arc::new(Field::new("num_chars", DataType::Int64, false));
+        let num_chars_field = Arc::new(Field::new("num_chars", DataType::UInt64, false));
 
         StructArray::from(vec![
             (snapshot_field, snapshot),
